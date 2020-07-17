@@ -12,6 +12,8 @@ const modalAdd = document.querySelector('.modal__add'),
 const elementsModalSubmit = [...modalSubmit.elements]
    .filter(elem => elem.tagName !== 'BUTTON' && elem.type !== 'submit');
 
+const saveDB = () => localStorage
+
 const checkForm = () =>{
     const validForm = elementsModalSubmit.every(elem => elem.value);
     modalBtnSubmit.disabled = !validForm;
@@ -42,12 +44,13 @@ modalSubmit.addEventListener('submit', event=> {
         itemObj[elem.name] = elem.value;
     }
     dataBase.push(itemObj);
+    //Замена eventa путем вставки пустого объекта и передачи свойства target
     closeModalEsc({target: modalAdd});
-    console.log(dataBase)
+    console.log(dataBase);
 });
 
 addAd.addEventListener('click', () => {
-    modalAdd.classList.remove('hide'),
+    modalAdd.classList.remove('hide');
     modalBtnSubmit.disabled = true;
     document.addEventListener('keydown', closeModalEsc);
 });

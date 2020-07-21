@@ -12,6 +12,9 @@ const modalAdd = document.querySelector('.modal__add'),
     modalFileInput = document.querySelector('.modal__file-input'),
     modalFileBtn = document.querySelector('.modal__file-btn'),
     modalImageAdd = document.querySelector('.modal__image-add');
+//Запоминаем дефолтную картинку и надпись при добавлении фотографии
+const textFileBtn = modalFileBtn.textContent;
+const srcModalImage = modalImageAdd.src;
 
 const elementsModalSubmit = [...modalSubmit.elements]
    .filter(elem => elem.tagName !== 'BUTTON' && elem.type !== 'submit');
@@ -38,8 +41,26 @@ const closeModalEsc = (event) => {
             document.removeEventListener('keydown', closeModalEsc);
             // Очистка формы и возвращение надписи про заполнение всех полей
             modalSubmit.reset();
+            modalImageAdd.src = srcModalImage;
+            modalFileBtn.textContent = textFileBtn;
             checkForm();
         }
+};
+
+const renderCard = () => {
+    catalog.textContent = '';
+    dataBase.forEach((item, i) => {
+        //Именно доавляем HTML
+        catalog.insertAdjacentHTML('beforeend', `
+        <li class="card" data-id="${i}">
+            <img class="card__image" src="data:image/jpeg;base64,${item.image}" alt="test">
+            <div class="card__description">
+                <h3 class="card__header">${item.nameItem}</h3>
+                <div class="card__price">${item.costItem} ₽</div>
+            </div>
+        </li>
+        `);
+    });
 };
 
 modalFileInput.addEventListener('change', event => {
@@ -59,6 +80,8 @@ modalFileInput.addEventListener('change', event => {
         }
         else{
             modalFileBtn.textContent = 'картинка больше 2Мб';
+            modalFileInput.value = '';
+            checkForm();
         }
 
     });
@@ -74,10 +97,12 @@ modalSubmit.addEventListener('submit', event=> {
     for (const elem of elementsModalSubmit){
         itemObj[elem.name] = elem.value;
     }
+    itemObj.image = infoPhoto.base64;
     dataBase.push(itemObj);
     //Замена eventa путем вставки пустого объекта и передачи свойства target
     closeModalEsc({target: modalAdd});
-    saveDB()
+    saveDB();
+    renderCard();
     // console.log(dataBase);
 });
 
@@ -90,7 +115,9 @@ addAd.addEventListener('click', () => {
 catalog.addEventListener('click', event => {
     const target = event.target;
     if (target.closest('.card')){
+        renderItemCard();
         modalItem.classList.remove('hide');
+
         document.addEventListener('keydown', closeModalEsc);
     }
 });
@@ -103,5 +130,36 @@ catalog.addEventListener('click', event => {
 //         modalSubmit.reset();
 //     }
 // });
+const renderItemCard = () => {
+    modalItem.textContent = '';
+    dataBase.findIndex((item, ${item.index}) => {
+        //Именно доавляем HTML
+        modalItem.insertAdjacentHTML('beforeend', `
+<!--            <div class="modal modal__item hide">-->
+                <div class="modal__block" data-id="${i}">
+                    <h2 class="modal__header">Купить</h2>
+                    <div class="modal__content">
+                        <div><img class="modal__image modal__image-item" src="data:image/jpeg;base64,${item.image}" alt="test"></div>
+                        <div class="modal__description">
+                            <h3 class="modal__header-item">${item.nameItem}</h3>
+                            <p>Состояние: <span class="modal__status-item">отличное</span></p>
+                            <p>Описание:
+                                <span class="modal__description-item">${item.descriptionItem}</span>
+                            </p>
+                            <p>Цена: <span class="modal__cost-item">${item.costItem} ₽</span></p>
+                            <button class="btn">Купить</button>
+                        </div>
+                    </div>
+                    <button class="modal__close">&#10008;</button>
+                </div>
+<!--            </div>    -->
+        `);
+    });
+};
+modalItem.addEventListener('change', event => {
+    renderItemCard();
+});
 modalAdd.addEventListener('click', closeModalEsc);
 modalItem.addEventListener('click', closeModalEsc);
+
+renderCard();

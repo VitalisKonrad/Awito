@@ -1,7 +1,7 @@
 // 'use strict';
 
 const dataBase = JSON.parse(localStorage.getItem('awito')) || [];
-
+let counter = 0;
 const modalAdd = document.querySelector('.modal__add'),
     addAd = document.querySelector('.add__ad'),
     modalBtnSubmit = document.querySelector('.modal__btn-submit'),
@@ -12,6 +12,16 @@ const modalAdd = document.querySelector('.modal__add'),
     modalFileInput = document.querySelector('.modal__file-input'),
     modalFileBtn = document.querySelector('.modal__file-btn'),
     modalImageAdd = document.querySelector('.modal__image-add');
+
+const modalImageItem = document.querySelector('.modal__image-item'),
+    modalHeaderItem = document.querySelector('.modal__header-item'),
+    modalStatusItem = document.querySelector('.modal__status-item'),
+    modalDescriptionItem = document.querySelector('.modal__description-item'),
+    modalCostItem = document.querySelector('.modal__cost-item');
+
+const searchInput = document.querySelector('.search__input'),
+   menuContainer = document.querySelector('.menu__container');
+
 //Запоминаем дефолтную картинку и надпись при добавлении фотографии
 const textFileBtn = modalFileBtn.textContent;
 const srcModalImage = modalImageAdd.src;
@@ -46,13 +56,13 @@ const closeModalEsc = (event) => {
             checkForm();
         }
 };
-
-const renderCard = () => {
+//С версии 6 выводим то, что по умолчанию если пусто
+const renderCard = (DB=dataBase) => {
     catalog.textContent = '';
-    dataBase.forEach((item, i) => {
+    DB.forEach((item) => {
         //Именно доавляем HTML
         catalog.insertAdjacentHTML('beforeend', `
-        <li class="card" data-id="${i}">
+        <li class="card" data-id="${item.id}">
             <img class="card__image" src="data:image/jpeg;base64,${item.image}" alt="test">
             <div class="card__description">
                 <h3 class="card__header">${item.nameItem}</h3>
@@ -62,6 +72,16 @@ const renderCard = () => {
         `);
     });
 };
+
+searchInput.addEventListener('input', event => {
+    //Обрезаем пробелы в начале и конце, а также делаем нижний регистр
+    const valueSearch = (searchInput.value.trim().toLowerCase());
+    if (valueSearch.length >2) {
+        const result = dataBase.filter(item => item.nameItem.toLowerCase().includes(valueSearch) ||
+                                        item.descriptionItem.toLowerCase().includes(valueSearch));
+        renderCard(result);
+    }
+})
 
 modalFileInput.addEventListener('change', event => {
     const target = event.target;
@@ -94,9 +114,12 @@ modalSubmit.addEventListener('submit', event=> {
     //Предотвращаем перезагрузку страницы после  submit`a
     event.preventDefault();
     const itemObj = {};
+
     for (const elem of elementsModalSubmit){
         itemObj[elem.name] = elem.value;
+        
     }
+    itemObj.id = counter++;
     itemObj.image = infoPhoto.base64;
     dataBase.push(itemObj);
     //Замена eventa путем вставки пустого объекта и передачи свойства target
@@ -114,51 +137,31 @@ addAd.addEventListener('click', () => {
 
 catalog.addEventListener('click', event => {
     const target = event.target;
-    if (target.closest('.card')){
-        renderItemCard();
+    const card = target.closest('.card');
+    
+    if (card) {
+        //Получаем id карточки. Поскольку card.dataset.id это строка, то преобразуем в число
+        const item = dataBase.find(item => item.id === +card.dataset.id);
+        // console.log(item)
+        modalImageItem.src = `data:image/jpeg;base64,${item.image}`;
+        modalHeaderItem.textContent = item.nameItem;
+        modalStatusItem.textContent = item.status === 'new' ? 'Новый' : 'Б/У';
+        modalDescriptionItem.textContent = item.descriptionItem;
+        modalCostItem.textContent = item.costItem;
+        
         modalItem.classList.remove('hide');
-
         document.addEventListener('keydown', closeModalEsc);
     }
 });
 
-// modalAdd.addEventListener('click', event => {
-//     const target = event.target;
-//     if(target.classList.contains('modal__close') ||
-//     target === modalAdd){
-//         modalAdd.classList.add('hide')
-//         modalSubmit.reset();
-//     }
-// });
-const renderItemCard = () => {
-    modalItem.textContent = '';
-    dataBase.findIndex((item, ${item.index}) => {
-        //Именно доавляем HTML
-        modalItem.insertAdjacentHTML('beforeend', `
-<!--            <div class="modal modal__item hide">-->
-                <div class="modal__block" data-id="${i}">
-                    <h2 class="modal__header">Купить</h2>
-                    <div class="modal__content">
-                        <div><img class="modal__image modal__image-item" src="data:image/jpeg;base64,${item.image}" alt="test"></div>
-                        <div class="modal__description">
-                            <h3 class="modal__header-item">${item.nameItem}</h3>
-                            <p>Состояние: <span class="modal__status-item">отличное</span></p>
-                            <p>Описание:
-                                <span class="modal__description-item">${item.descriptionItem}</span>
-                            </p>
-                            <p>Цена: <span class="modal__cost-item">${item.costItem} ₽</span></p>
-                            <button class="btn">Купить</button>
-                        </div>
-                    </div>
-                    <button class="modal__close">&#10008;</button>
-                </div>
-<!--            </div>    -->
-        `);
-    });
-};
-modalItem.addEventListener('change', event => {
-    renderItemCard();
+menuContainer.addEventListener('click', event => {
+    const target = event.target;
+    if (target.tagName === 'A') {
+        const result = dataBase.filter(item => item.category === target.dataset.category);
+        renderCard(result);
+    }
 });
+
 modalAdd.addEventListener('click', closeModalEsc);
 modalItem.addEventListener('click', closeModalEsc);
 
